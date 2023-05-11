@@ -1,6 +1,5 @@
 package com.web.model;
-import java.time.LocalDate;
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -26,10 +25,7 @@ public class Transaction {
 	@Column(length = 20)
 	private Integer transaction_number;
 	@Column(length = 20)
-//	@Temporal(TemporalType.DATE)
-	private LocalDate date;
-	@Column(length = 20)
-	private LocalTime time;
+	private LocalDateTime date;
 	@Column(length = 20)
 	private String fullname;
 	@Column(length = 20)
@@ -41,87 +37,72 @@ public class Transaction {
 	@Column(length = 20)
 	private String address;
 	public Transaction() {}
-
-	public Transaction(Integer accountnumber, LocalDate date, LocalTime time,String fullname, Double currentbalance, Double debit,
-			Double credit, String address) {
+	public Transaction(Integer accountnumber, Integer transaction_number, LocalDateTime date, String fullname,
+			Double currentbalance, Double debit, Double credit, String address) {
 		super();
 		this.accountnumber = accountnumber;
+		this.transaction_number = transaction_number;
 		this.date = date;
-		this.time = time;
 		this.fullname = fullname;
 		this.currentbalance = currentbalance;
 		this.debit = debit;
 		this.credit = credit;
 		this.address = address;
 	}
-
 	public Integer getAccountnumber() {
 		return accountnumber;
 	}
-
 	public void setAccountnumber(Integer accountnumber) {
 		this.accountnumber = accountnumber;
 	}
-
-	public LocalDate getDate() {
+	public Integer getTransaction_number() {
+		return transaction_number;
+	}
+	public void setTransaction_number(Integer transaction_number) {
+		this.transaction_number = transaction_number;
+	}
+	public LocalDateTime getDate() {
 		return date;
 	}
-
-	public void setDate(LocalDate date) {
+	public void setDate(LocalDateTime date) {
 		this.date = date;
 	}
-	public LocalTime getTime() {
-		return time;
-	}
-
-	public void setTime(LocalTime time) {
-		this.time = time;
-	}
-
 	public String getFullname() {
 		return fullname;
 	}
-
 	public void setFullname(String fullname) {
 		this.fullname = fullname;
 	}
-
 	public Double getCurrentbalance() {
 		return currentbalance;
 	}
-
 	public void setCurrentbalance(Double currentbalance) {
 		this.currentbalance = currentbalance;
 	}
-
 	public Double getDebit() {
 		return debit;
 	}
-
 	public void setDebit(Double debit) {
 		this.debit = debit;
 	}
-
 	public Double getCredit() {
 		return credit;
 	}
-
 	public void setCredit(Double credit) {
 		this.credit = credit;
 	}
-
 	public String getAddress() {
 		return address;
 	}
-
 	public void setAddress(String address) {
 		this.address = address;
 	}
-
 	@Override
 	public String toString() {
-		return "Transaction [accountnumber=" + accountnumber + ", date=" + date + ", time" + time + ", fullname=" + fullname
-				+ ", currentbalance=" + currentbalance + ", debit=" + debit + ", credit=" + credit + ", address="
-				+ "address ]";
+		return "Transaction [accountnumber=" + accountnumber + ", transaction_number=" + transaction_number + ", date="
+				+ date + ", fullname=" + fullname + ", currentbalance=" + currentbalance + ", debit=" + debit
+				+ ", credit=" + credit + ", address=" + address + "]";
 	}
-}
+
+	
+	}

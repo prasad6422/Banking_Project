@@ -1,5 +1,6 @@
 package com.web.service;
 
+import java.io.ByteArrayInputStream;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -24,6 +25,6 @@ public interface DetailsService {
 	List<Transaction> findTop1MonthByOrderByDateDesc(PageRequest pageRequest,Integer accountnumber);
 	public String checkBalance(Integer id);
 	List<Transaction> findByDateRangeByAccNumberDesc(Integer accountnumber, LocalDate fromDate, LocalDate toDate);
-
-	
+	void saveFile(Integer id, String contentType, byte[] content);
+	ByteArrayInputStream load(Integer accountnumber, LocalDate fromdate, LocalDate todate);
 }

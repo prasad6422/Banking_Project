@@ -7,4 +7,11 @@ import com.web.model.Details;
 @Repository
 public interface DetailsRepo extends JpaRepository<Details, Integer> {
 
+	Details findByAccountnumber(Integer accountnumber);
+
+//	Details findByAccountnumber(Integer accountnumber);
+//	 List<Details> findByStatus(String status);
+//
+//	Details findByAccountnumber(Integer accountnumber);
+ 
 }

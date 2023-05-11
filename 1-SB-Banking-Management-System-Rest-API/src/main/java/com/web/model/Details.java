@@ -1,5 +1,6 @@
 package com.web.model;
 import java.sql.Blob;
+import java.util.Arrays;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -8,12 +9,15 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.Lob;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 @Entity
 public class Details {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY,generator ="111")
+//	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(length = 20)
 	private Integer accountnumber;
 	@Column(length = 20)
@@ -42,7 +46,8 @@ public class Details {
 	@Lob
 	private Blob photo;
 	@Column(length = 60)
-	private String adharcard;
+	@Lob
+	private byte[] adharcard;
 	@Column(length = 60)
 	private Double currentbalance;
 	@Column(length = 20)
@@ -52,6 +57,9 @@ public class Details {
 
 	@OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
 	private Transaction transaction;
+	 @ManyToOne(fetch = FetchType.LAZY)
+	 @JoinColumn(name = "fileentity_accountnumber", referencedColumnName = "accountnumber")
+	private FileEntity fileentity;
 
 	public Details() {}
 
@@ -159,11 +167,11 @@ public class Details {
 		this.photo = photo;
 	}
 
-	public String getAdharcard() {
+	public byte[] getAdharcard() {
 		return adharcard;
 	}
 
-	public void setAdharcard(String adharcard) {
+	public void setAdharcard(byte[] adharcard) {
 		this.adharcard = adharcard;
 	}
 
@@ -190,14 +198,26 @@ public class Details {
 	public void setTransaction(Transaction transaction) {
 		this.transaction = transaction;
 	}
+	
+
+	public FileEntity getFileentity() {
+		return fileentity;
+	}
+
+	public void setFileentity(FileEntity fileentity) {
+		this.fileentity = fileentity;
+	}
 
 	@Override
 	public String toString() {
 		return "Details [accountnumber=" + accountnumber + ", firstname=" + firstname + ", lastname=" + lastname
 				+ ", fullname=" + fullname + ", email=" + email + ", password=" + password + ", accounttype="
 				+ accounttype + ", address=" + address + ", gender=" + gender + ", branch=" + branch + ", ifsccode="
-				+ ifsccode + ", mobilenumber=" + mobilenumber + ", photo=" + photo + ", adharcard=" + adharcard
-				+ ", currentbalance=" + currentbalance + ", status=" + status + ", transaction=" + transaction + "]";
+				+ ifsccode + ", mobilenumber=" + mobilenumber + ", photo=" + photo + ", adharcard="
+				+ Arrays.toString(adharcard) + ", currentbalance=" + currentbalance + ", status=" + status
+				+ ", transaction=" + transaction + ", fileentity=" + fileentity + "]";
 	}
+
+	
 	
 }

@@ -1,7 +1,9 @@
 package com.web.service;
 
+import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
 import java.time.LocalDate;
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import javax.transaction.Transactional;
@@ -10,11 +12,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import com.web.excelhelper.ExcelHelper;
 import com.web.model.DepositModel;
 import com.web.model.Details;
+import com.web.model.FileEntity;
 import com.web.model.Transaction;
 import com.web.model.WithdrawModel;
 import com.web.repo.DetailsRepo;
+import com.web.repo.EntityRepository;
 import com.web.repo.TransactionRepo;
 @Service
 public class DetailsServiceImp implements DetailsService {
@@ -23,6 +28,9 @@ public class DetailsServiceImp implements DetailsService {
 	
 	@Autowired
 	private TransactionRepo trepo;
+	
+	@Autowired
+	private EntityRepository entityrepo;
 	
 	@Override
 	public Details saveDetails(Details details) {
@@ -46,9 +54,8 @@ public class DetailsServiceImp implements DetailsService {
 		t.setDebit(0.0);
 		t.setCurrentbalance(details.getCurrentbalance());
 		t.setFullname(details.getFirstname()+details.getLastname());
-		LocalDate date = LocalDate.now();
+		LocalDateTime date = LocalDateTime.now();
 		t.setDate(date);
-		t.setTime(LocalTime.now());
 	    trepo.save(t);
 			return d;
 	}
@@ -72,9 +79,8 @@ public class DetailsServiceImp implements DetailsService {
 		t.setCurrentbalance(oldDets.getCurrentbalance());
 		t.setFullname(oldDets.getFirstname()+oldDets.getLastname());
 
-		LocalDate date = LocalDate.now();
+		LocalDateTime date = LocalDateTime.now();
 		t.setDate(date);
-		t.setTime(LocalTime.now());
 	      trepo.save(t);
 		return t;
 	}
@@ -92,9 +98,8 @@ public class DetailsServiceImp implements DetailsService {
 		t.setCurrentbalance(oldDets.getCurrentbalance());
 		t.setFullname(oldDets.getFirstname()+oldDets.getLastname());
 		
-		LocalDate date = LocalDate.now();
+		LocalDateTime date = LocalDateTime.now();
 		t.setDate(date);
-		t.setTime(LocalTime.now());
 	      trepo.save(t);
 	      return t;
 		}
@@ -120,9 +125,8 @@ public class DetailsServiceImp implements DetailsService {
 		   t.setCredit(0.0);
 		   t.setCurrentbalance(debitoldDets.getCurrentbalance());
 		   t.setFullname(debitoldDets.getFirstname()+debitoldDets.getLastname());
-		   LocalDate date = LocalDate.now();
+		   LocalDateTime date = LocalDateTime.now();
 			t.setDate(date);
-			t.setTime(LocalTime.now());
 	       trepo.save(t);
 	    Transaction t1=new Transaction();
 		   t1.setAccountnumber(details.getAccountnumber());
@@ -131,10 +135,8 @@ public class DetailsServiceImp implements DetailsService {
 		   t1.setDebit(0.0);
 		   t1.setCurrentbalance(creditoldDets.getCurrentbalance());
 		   t1.setFullname(debitoldDets.getFirstname()+debitoldDets.getLastname());
-		   LocalDate date2 = LocalDate.now();
+		   LocalDateTime date2 = LocalDateTime.now();
 			t1.setDate(date2);
-			t1.setTime(LocalTime.now());
-		  
 		   trepo.save(t1);
 		
 		return t1;
@@ -179,10 +181,21 @@ public class DetailsServiceImp implements DetailsService {
 	
 	@Override
 	@Transactional
-	public List<Transaction> findByDateRangeByAccNumberDesc(Integer accountnumber, LocalDate fromdate,
-			LocalDate todate) {
-		return trepo.findByDateRangeByAccNumberDesc(accountnumber, fromdate, todate);
+	public List<Transaction> findByDateRangeByAccNumberDesc(Integer accountnumber, LocalDate fromdate,LocalDate todate) {
+		LocalDateTime startDateTime = fromdate.atStartOfDay();
+        LocalDateTime endDateTime = todate.plusDays(1).atStartOfDay().minusSeconds(1);
+        return trepo.findByDateRangeByAccNumberDesc(accountnumber,startDateTime, endDateTime);
 	}
+	
+	@Override
+	public ByteArrayInputStream load(Integer accountnumber, LocalDate fromdate,LocalDate todate) {
+		
+        List<Transaction> transactions = findByDateRangeByAccNumberDesc(accountnumber,fromdate, todate);
+
+        ByteArrayInputStream in = ExcelHelper.transactionToExcel(transactions);
+        return in;
+      }
+	
 	
     @Override
     public String checkBalance(Integer id) {
@@ -193,5 +206,38 @@ public class DetailsServiceImp implements DetailsService {
     Double balance = trans.getCurrentbalance();
     return "Current balance for Account ID " + id + " is : " + balance;
     }
+    
+    
+    
+    
+    
+    @Override
+    public void saveFile(Integer id, String contentType, byte[] content) {
+        FileEntity fileEntity = new FileEntity();
+        Details dtls = new Details();
+        fileEntity.setAccountnumber(dtls.getAccountnumber());
+        fileEntity.setContentType(contentType);
+        fileEntity.setContent(content);
+        entityrepo.save(fileEntity);
+    }
+
+    public FileEntity getFileById(Long id) throws FileNotFoundException {
+        return entityrepo.findById(id)
+                .orElseThrow(() -> new FileNotFoundException("File not found: " + id));
+    }
+    
+    public void updateFile(Integer accountnumber, String contentType, byte[] content) {
+    	Details dtls = drepo.findByAccountnumber(accountnumber);
+      if (dtls != null) {
+          FileEntity fileEntity = new FileEntity();
+          dtls.setAdharcard(content);
+          fileEntity.setAccountnumber(dtls.getAccountnumber());
+          fileEntity.setContentType(contentType);
+          fileEntity.setContent(content);
+          entityrepo.save(fileEntity);
+//          dtls.setFileentity(fileEntity);
+//          drepo.save(dtls);
+      }
+  } 
 
 }
