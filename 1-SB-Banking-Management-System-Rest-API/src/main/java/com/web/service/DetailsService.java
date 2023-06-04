@@ -35,5 +35,7 @@ public interface DetailsService {
 	
 	Optional<Transaction> get1Transaction(Integer accountnumber);  
 	public String getEmailByAccountNumber(Integer accountnumber); 
-	List<Transaction> getLatestMonthTransactions(Integer accountnumber, LocalDate startDate, LocalDate endDate);  
+	List<Transaction> getLatestMonthTransactions(Integer accountnumber, LocalDate startDate, LocalDate endDate); 
+	String getDetailsView();
+	
 }

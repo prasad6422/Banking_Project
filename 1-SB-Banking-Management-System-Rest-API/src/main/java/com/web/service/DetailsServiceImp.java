@@ -486,6 +486,12 @@ public class DetailsServiceImp implements DetailsService {
 		  }
 	}
 
+	@Override
+	public String getDetailsView() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 	
 	
 
