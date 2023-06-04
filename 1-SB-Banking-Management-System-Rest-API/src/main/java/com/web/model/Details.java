@@ -171,8 +171,8 @@ public class Details {
 		return adharcard;
 	}
 
-	public void setAdharcard(byte[] adharcard) {
-		this.adharcard = adharcard;
+	public void setAdharcard(byte[] string) {
+		this.adharcard = string;
 	}
 
 	public Double getCurrentbalance() {
@@ -216,6 +216,16 @@ public class Details {
 				+ ifsccode + ", mobilenumber=" + mobilenumber + ", photo=" + photo + ", adharcard="
 				+ Arrays.toString(adharcard) + ", currentbalance=" + currentbalance + ", status=" + status
 				+ ", transaction=" + transaction + ", fileentity=" + fileentity + "]";
+	}
+
+	public void setPhoto(String stringCellValue) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void setAdharcard(String stringCellValue) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	

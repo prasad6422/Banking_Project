@@ -1,17 +1,26 @@
 package com.web.controller;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
+
+import javax.mail.internet.MimeMessage;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,12 +44,15 @@ import com.web.service.DetailsServiceImp;
 @RequestMapping("/transactions")
 public class DetailsController {
 
-	@SuppressWarnings("unused")
-	private static final Integer Integer = null;
+//	@SuppressWarnings("unused")
+//	private static final Integer Integer = null;
 	@Autowired
 	private DetailsService service;
 	@Autowired
 	DetailsServiceImp serviceimpl;
+	
+	private final DetailsServiceImp detailsServiceImp;
+	private final JavaMailSender javaMailSender;
 	
 //	Create The New Account
 	@PostMapping("/save")
@@ -69,6 +81,7 @@ public class DetailsController {
 		}
 		return message;
 	}
+	
 //	Withdraw The Amount
 	@PostMapping("/withdraw")
 	public String withdraw(@RequestBody WithdrawModel details) {
@@ -82,6 +95,7 @@ public class DetailsController {
 		}
 		return message;
 	}
+	
 //	Transfer The Amount By One Account To Another Account
 	@PostMapping("/transfer/{id}")
 	public String transfer(@RequestBody Details details,@PathVariable Integer id) {
@@ -98,10 +112,23 @@ public class DetailsController {
 	
 //	Get Account Details With Account Number
 	@GetMapping("/getone/{id}")
-	public Details getOneRecord(@PathVariable Integer id) {
-		Details d=service.getOneDetail(id);
-		return d;
+	private ResponseEntity<Details> getOneRecord(@PathVariable Integer id) {
+		Optional<Details> detailsFound = service.getOneDetail(id);
+		if(detailsFound.isPresent()) {
+		return new ResponseEntity<Details>(detailsFound.get(),HttpStatus.FOUND);
+	}else {
+		return new ResponseEntity<Details>(HttpStatus.NO_CONTENT);
 	}
+	}
+	
+//	Delete Account by Id
+	@DeleteMapping("/delete/{id}")
+	private ResponseEntity<String> deleteByAccountNumber(@PathVariable Integer id){
+		String response = service.deleteByAccountNumber(id);
+		return new ResponseEntity<String>(response,HttpStatus.OK);
+	}
+	
+	
 //	Get All Accounts
 	@GetMapping("/getAll")
 	public List<Details> getAll() {
@@ -130,7 +157,15 @@ public class DetailsController {
 // Get All Transaction with AccountNumber
 	@GetMapping("/getallstatement/{accountnumber}")
 	public List<Transaction> getalltatement(@PathVariable Integer accountnumber){
-		List<Transaction> getallstatement = service.findTop1ByOrderByDateDesc(accountnumber);
+		List<Transaction> getallstatement = service.findTopAllByOrderByDateDesc(accountnumber);
+		return getallstatement;
+	}
+	
+	
+//	Get 1 Transaction with AccountNumber
+	@GetMapping("/get1transction/{accountnumber}")
+	public Optional<Transaction> getalltatement1(@PathVariable Integer accountnumber){
+		Optional<Transaction> getallstatement = serviceimpl.get1Transaction(accountnumber);
 		return getallstatement;
 	}
 	
@@ -186,13 +221,131 @@ public class DetailsController {
 	 
 	 @PutMapping("/update")
 		public ResponseEntity<Void> updateFile(
-				@RequestParam("accountnumber") Integer accountnumber,
+				@RequestParam("accountnumber") Integer id,
 				@RequestParam("file") MultipartFile file) throws IOException {
 			String contentType = file.getContentType();
 			byte[] content = file.getBytes();
-			serviceimpl.updateFile(accountnumber, contentType, content);
+			serviceimpl.updateFile(id, contentType, content);
 			return ResponseEntity.ok().build();
 		}
+	 
+//	 Upload excel Data 
+	 @PostMapping("/upload")
+	    public ResponseEntity<String> uploadExcel(@RequestParam("file") MultipartFile file) throws IOException {
+		
+	        serviceimpl.uploadExcelData(file);
+			return ResponseEntity.ok("Excel data uploaded successfully");
+	    }
+	 
+	 
+//	 public DetailsController(DetailsServiceImp  detailsServiceImp) {
+//		 this.detailsServiceImp=detailsServiceImp;
+//	 }
+//	
+	 
+	 public DetailsController(DetailsServiceImp detailsServiceImp, JavaMailSender javaMailSender) {
+	        this.detailsServiceImp = detailsServiceImp;
+	        this.javaMailSender = javaMailSender;
+	    }
+	 
+	 @GetMapping("/transaction/sendEmail")
+	    public String sendEmailWithTransactions(
+	    		@RequestParam("accountnumber") Integer accountnumber,
+	    		@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+	    		 @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate)
+	    		 {
+	        try {
+	            List<Transaction> transactions = detailsServiceImp.getLatestMonthTransactions(accountnumber, startDate, endDate);
+	            System.out.println("List of Data"+transactions);
+	            if (transactions.isEmpty()) {
+	                return "No transactions found for the specified account number and dates.";
+	            }
+	            ByteArrayOutputStream pdfData = detailsServiceImp.generateTransactionsPdf(transactions, accountnumber);
+
+	            // Create a new email message with attachment
+	            MimeMessage message = javaMailSender.createMimeMessage();
+	            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+	            
+//	             Set the recipient dynamically based on the account number 
+	            String recipientEmail = detailsServiceImp.getEmailByAccountNumber(accountnumber);
+	            helper.setTo(recipientEmail);
+
+	            helper.setSubject("Latest Month's Transactions");
+	            helper.setText("Please find attached the latest month's transactions.");
+
+	            // Add the PDF attachment
+	            helper.addAttachment("transactions.pdf", new ByteArrayResource(pdfData.toByteArray()));
+
+	            // Send the email
+	            javaMailSender.send(message);
+
+	            return "Email sent successfully.";
+	        } catch (Exception e) {
+	            return "Failed to send email: " + e.getMessage();
+	        }
+	    }
+	 
+//	 @GetMapping("/users/pdf")
+//	    public ResponseEntity<byte[]> generateUsersPdf(
+//	    		@RequestParam("accountnumber") Integer accountnumber,
+//	    		@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+//	    		 @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) throws IOException, DocumentException {
+//	        List<Transaction> transactions = detailsServiceImp.getLastMonthTransaction(accountnumber,startDate, endDate);
+	        
+
+//	        // Create a new PDF document
+//	        Document document = new Document();
+//	        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+//	        PdfWriter.getInstance(document, baos);
+//
+//	        document.open();
+//
+//	        // Create a table with 8 columns
+//	        PdfPTable table = new PdfPTable(8);
+//	        table.setWidthPercentage(100);
+//
+//	        // Add table headers
+//	        addTableHeader(table);
+//
+//	        // Add table rows with user data
+//	        addTableRows(table, transactions);
+//
+//	        // Add the table to the document
+//	        document.add(table);
+//	        document.close();
+//
+//	        // Set the response headers
+//	        HttpHeaders headers = new HttpHeaders();
+//	        headers.setContentType(MediaType.APPLICATION_PDF);
+//	        headers.add("Content-Disposition", "inline; filename=transactions.pdf");
+//
+//	        return new ResponseEntity<>(baos.toByteArray(), headers, HttpStatus.OK);
+//	    }
+//
+//	    private void addTableHeader(PdfPTable table) {
+//	        table.addCell("Transaction_Number");
+//	        table.addCell("AccountNumber");
+//	        table.addCell("Date");
+//	        table.addCell("FullName");
+//	        table.addCell("CurrentBalance");
+//	        table.addCell("Credit");
+//	        table.addCell("Debit");
+//	        table.addCell("Address");
+//	    }
+//
+//	    private void addTableRows(PdfPTable table, List<Transaction> transactions) {
+//	        for (Transaction transaction : transactions) {
+//	            table.addCell(transaction.getTransaction_number().toString());
+//	            table.addCell(transaction.getAccountnumber().toString());
+//	            table.addCell(transaction.getDate().toString());
+//	            table.addCell(transaction.getFullname());
+//	            table.addCell(transaction.getCurrentbalance().toString());
+//	            table.addCell(transaction.getCredit().toString());
+//	            table.addCell(transaction.getDebit().toString());
+//	            table.addCell(transaction.getAddress());
+//	        }
+//	    }
+
 	 
 	 
 	 

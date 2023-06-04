@@ -8,10 +8,15 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.NamedQuery;
 @Entity
-@NamedQuery(name="Transaction.findTop1ByOrderByDateDesc", query = "select t from Transaction t where t.accountnumber =:accountnumber order by t.date desc")
+@NamedQuery(name="Transaction.findTopAllByOrderByDateDesc", query = "select t from Transaction t where t.accountnumber =:accountnumber order by t.date desc")
 @NamedQuery(name="Transaction.findTop10ByOrderByDateDesc", query = "select t from Transaction t where t.accountnumber =:accountnumber order by t.date desc")
 @NamedQuery(name="Transaction.findTop7ByOrderByDateDesc", query = "select t from Transaction t where t.accountnumber =:accountnumber order by t.date desc")
 @NamedQuery(name="Transaction.findTop1MonthByOrderByDateDesc", query = "select t from Transaction t where t.accountnumber =:accountnumber order by t.date desc")
+//@NamedQuery(name = "Transaction.findLatestTopOneTransaction", query = "select t from Transaction t where t.accountnumber =:accountnumber order by t.date desc")
+//@NamedQuery(
+//	    name = "Transaction.findallByOrderByDateDesc",
+//	    query = "SELECT t FROM Transaction t ORDER BY t.date DESC"
+//	)
 //@NamedQuery(
 //	    name = "Transaction.findByDateRangeByAccNumberDesc",
 //	    query = "SELECT t FROM Transaction t WHERE t.accountnumber = :accNumber AND (t.date BETWEEN :fromDate AND :toDate)"
